@@ -14,13 +14,8 @@ const http = require("http");
 const server = http.createServer(app);
 const DB = process.env.DBURI.replace("<PASSWORD>", process.env.DBPASSWORD)
 
-mongoose.connect(DB,{
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    useUnifiedToplogy: true,
-}).then((prop) => {
-    console.log("Boo yeah !")
+mongoose.connect(DB).then((prop) => {
+    console.log("Boo yeah Mongo Connecteddd !")
 }).catch((err) => {
     console.log(err)
 })
