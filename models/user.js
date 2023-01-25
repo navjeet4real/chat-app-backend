@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     password: {
         type : String,
     },
+    verified: {
+        type: Boolean,
+        default: false
+    },
     passwordChangedAt: {
         type: Date,
     },
