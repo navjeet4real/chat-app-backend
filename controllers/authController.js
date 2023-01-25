@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const filterObject = require("../utils/filterObject");
-
+const otpGenerator = require("otp-generator");
 const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 
 const userController = {
@@ -74,6 +74,67 @@ const userController = {
       return res.status(500).json({ msg: err.message });
     }
   },
+  sendOtp: async (req, res, next) => {
+    try {
+      const { userId } = req;
+
+      const new_otp = otpGenerator.generate(6, {
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false,
+      });
+
+      const otp_expiry_time = Date.now() + 10*60*1000;
+
+      await User.findByIdAndUpdate(userId,{
+        otp: new_otp,
+        otp_expiry_time,
+      })
+
+      res.status(200).json({
+        status: "Success",
+        message: "OTP send successfully"
+      })
+
+    } catch (error) {
+      return res.status(500).json({ msg: err.message });
+    }
+  },
+  verifyOtp: async (req,res, next) => {
+    try {
+      const {email, otp} =req.body;
+
+      const user  = user.findOne({email, otp_expiry_time: {$gt: Date.now()}})
+
+      if(!user){
+        res.status(400).json({
+          staus: "error",
+          message: 'email is invalid or OTP expired'
+        });
+      }
+      if(!await user.correctOTP(otp, user.otp)){
+        res.status(400).json({
+          status: "error",
+          message: "OTP is incorrect"
+        })
+      }
+
+      user.verified = true;
+      user.otp = undefined;
+
+      await user.save({new: true, validateModifyOnly: true});
+
+      const token = signToken(user._id);
+
+      res.status(200).json({
+        status: "Success",
+        message: "Logged In.",
+        token,
+      });
+    } catch (error) {
+      return res.status(500).json({ msg: err.message });
+    }
+  }
 };
 
 module.exports = userController;

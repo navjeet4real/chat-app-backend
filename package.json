@@ -29,6 +29,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^6.8.4",
     "morgan": "^1.10.0",
+    "otp-generator": "^4.0.0",
     "xss": "^1.0.14"
   }
 }
