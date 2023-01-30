@@ -84,45 +84,47 @@ const userController = {
         specialChars: false,
       });
 
-      const otp_expiry_time = Date.now() + 10*60*1000;
+      const otp_expiry_time = Date.now() + 10 * 60 * 1000;
 
-      await User.findByIdAndUpdate(userId,{
+      await User.findByIdAndUpdate(userId, {
         otp: new_otp,
         otp_expiry_time,
-      })
+      });
 
       res.status(200).json({
         status: "Success",
-        message: "OTP send successfully"
-      })
-
+        message: "OTP send successfully",
+      });
     } catch (error) {
       return res.status(500).json({ msg: err.message });
     }
   },
-  verifyOtp: async (req,res, next) => {
+  verifyOtp: async (req, res, next) => {
     try {
-      const {email, otp} =req.body;
+      const { email, otp } = req.body;
 
-      const user  = user.findOne({email, otp_expiry_time: {$gt: Date.now()}})
+      const user = user.findOne({
+        email,
+        otp_expiry_time: { $gt: Date.now() },
+      });
 
-      if(!user){
+      if (!user) {
         res.status(400).json({
           staus: "error",
-          message: 'email is invalid or OTP expired'
+          message: "email is invalid or OTP expired",
         });
       }
-      if(!await user.correctOTP(otp, user.otp)){
+      if (!(await user.correctOTP(otp, user.otp))) {
         res.status(400).json({
           status: "error",
-          message: "OTP is incorrect"
-        })
+          message: "OTP is incorrect",
+        });
       }
 
       user.verified = true;
       user.otp = undefined;
 
-      await user.save({new: true, validateModifyOnly: true});
+      await user.save({ new: true, validateModifyOnly: true });
 
       const token = signToken(user._id);
 
@@ -134,7 +136,48 @@ const userController = {
     } catch (error) {
       return res.status(500).json({ msg: err.message });
     }
-  }
+  },
+  protect: async (req, res, next) => {
+    try {
+    } catch (error) {
+      return res.status(500).json({ msg: err.message });
+    }
+  },
+  forgotPassword: async (req, res, next) => {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      res.status(400).json({
+        status: "error",
+        message: "No user with given email address",
+      });
+    }
+
+    const resetToken = user.createPasswordReetToken();
+    const resetURL = `http://tawk.com/auth/reset-password/?code=${resetToken}`;
+    try {
+      // TODO => send Email
+      res.status(200).json({
+        status: "success",
+        message: "Reset Password link sent to email.",
+      });
+    } catch (error) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+
+      await User.save({ validateBeforeSave: false });
+      res.status(500).json({
+        status: "error",
+        message: "There was an error sending the mail.",
+      });
+    }
+  },
+  resetPassword: async (req, res, next) => {
+    try {
+    } catch (error) {
+      return res.status(500).json({ msg: err.message });
+    }
+  },
 };
 
 module.exports = userController;
