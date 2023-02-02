@@ -87,6 +87,12 @@ userSchema.methods.createPasswordReetToken = async function () {
     this.passwordResetExpires = Date.now() + 10*60*1000
   return resetToken;
 };
+
+userSchema.methods.chagedPasswordAfter = function (timestamp) {
+  return timestamp < this.passwordChangedAt; 
+}
+
+
 const User = new mongoose.model("User", userSchema);
 
 module.exports = User;

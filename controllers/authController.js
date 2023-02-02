@@ -2,7 +2,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const filterObject = require("../utils/filterObject");
 const otpGenerator = require("otp-generator");
-const crypto = require('crypto')
+const crypto = require('crypto');
+const { promisify } = require("util");
 const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 
 const userController = {
@@ -114,6 +115,8 @@ const userController = {
           staus: "error",
           message: "email is invalid or OTP expired",
         });
+
+        return;
       }
       if (!(await user.correctOTP(otp, user.otp))) {
         res.status(400).json({
@@ -140,6 +143,51 @@ const userController = {
   },
   protect: async (req, res, next) => {
     try {
+
+      // 1)  getting token (jwt) and check if it's available
+
+      let token;
+
+      if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
+        token = req.headers.authorization.split(" ")[1];
+      }else if(req.cookies.jwt){
+
+      }else{
+        res.status(400).json({
+          status: 'error',
+          message: "You are not logged In! Please log in for access."
+        })
+
+        return;
+      }
+
+      // 2) verification of token 
+
+      const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY)
+
+      // 3) check if user still exist
+
+      const this_user = await User.findById(decoded.userId)
+
+      if(!this_user){
+        res.status(400).json({
+          status: 'error',
+          message: 'The user belonging to this token does not exist.'
+        })
+      }
+
+      // 4) check if user cahnged their password after token is issued
+
+       if(this_user.chanedPasswordAfter(decoded.iat)){
+        res.status(400).json({
+          status: 'error',
+          message: 'user recently updated password. Please log in again.'
+        })
+       }
+
+       req.user = this_user;
+       next();
+
     } catch (error) {
       return res.status(500).json({ msg: err.message });
     }
@@ -152,6 +200,7 @@ const userController = {
         status: "error",
         message: "No user with given email address",
       });
+      return;
     }
 
     const resetToken = user.createPasswordReetToken();
@@ -188,6 +237,8 @@ const userController = {
           status: 'error',
           message: 'Token is invalid or Expired',
         });
+
+        return;
        }
 
        // 3) update user password and set resetToken & expiry to unefined
@@ -202,7 +253,7 @@ const userController = {
        // 4) login user and send  new JWT
 
        // TODO => send an email 
-       
+
        const token = signToken(user._id);
 
        res.status(200).json({
