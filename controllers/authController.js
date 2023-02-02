@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const filterObject = require("../utils/filterObject");
 const otpGenerator = require("otp-generator");
+const crypto = require('crypto')
 const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 
 const userController = {
@@ -174,6 +175,41 @@ const userController = {
   },
   resetPassword: async (req, res, next) => {
     try {
+       const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+
+       const user  = await User.findOne({
+        passwordResetToken : hashedToken,
+        passwordResetExpires: {$gt: Date.now() } 
+       }) 
+
+       // 2) if token has expired or submission is out of window
+       if(!user){
+        res.status(400).json({
+          status: 'error',
+          message: 'Token is invalid or Expired',
+        });
+       }
+
+       // 3) update user password and set resetToken & expiry to unefined
+
+       user.password = req.body.password
+       user.passwordConfirm = req.body.passwordConfirm 
+       user.passwordResetToken = undefined;
+       user.passwordResetExpires = undefined;
+
+       await user.save();
+
+       // 4) login user and send  new JWT
+
+       // TODO => send an email 
+       
+       const token = signToken(user._id);
+
+       res.status(200).json({
+         status: "Success",
+         message: "Password rested successfully.",
+         token,
+       });
     } catch (error) {
       return res.status(500).json({ msg: err.message });
     }
