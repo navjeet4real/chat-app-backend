@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { promisify } = require("util");
 const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 
-const userController = {
+const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
@@ -267,4 +267,4 @@ const userController = {
   },
 };
 
-module.exports = userController;
+module.exports = authController;
