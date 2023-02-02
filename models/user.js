@@ -64,7 +64,12 @@ userSchema.pre("save", async function (next) {
 
   next();
 });
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = bcrypt.hash(this.password, 12);
 
+  next();
+});
 userSchema.methods.correctPassword = async function (
   inputPassword,
   userPassword
