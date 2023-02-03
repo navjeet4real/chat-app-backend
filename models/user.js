@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const userSchema = new mongoose.Schema({
-  firstname: {
+  firstName: {
     type: String,
     required: [true, "First Name is required"],
   },
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
       validator: function (email) {
         return String(email)
           .toLowerCase()
-          .match("/^w+([.-]?w+)*@w+([.-]?w+)*(.w{2,3})+$/");
+          .match( /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
       },
       message: (props) => `Email (${props.value})  is invalid!`,
     },

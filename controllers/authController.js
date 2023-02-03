@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-const filterObject = require("../utils/filterObject");
+const filterObj = require("../utils/filterObj");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
@@ -46,7 +46,7 @@ const authController = {
     try {
       const { firstName, lastname, email, password } = req.body;
 
-      const filterBody = filterObject(
+      const filterBody = filterObj(
         req.body,
         "firstName",
         "lastName",
@@ -94,23 +94,23 @@ const authController = {
         otp_expiry_time,
       });
 
-      mailService.sendMail({
-        from: "",
-        to: "",
-        subject: "OTP For Login",
-        text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-      }).then(() => {
-        res.status(200).json({
-          status: "Success",
-          message: "OTP send successfully",
-        });
-      }).catch((err) => {
+      // mailService.sendMail({
+      //   from: "",
+      //   to: "",
+      //   subject: "OTP For Login",
+      //   text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+      // }).then(() => {
+      //   res.status(200).json({
+      //     status: "Success",
+      //     message: "OTP send successfully",
+      //   });
+      // }).catch((err) => {
 
-      });
+      // });
 
       res.status(200).json({
         status: "Success",
-        message: "OTP send successfully",
+        message: "OTP sent successfully",
       });
     } catch (error) {
       return res.status(500).json({ msg: err.message });

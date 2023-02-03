@@ -1,10 +1,10 @@
 const User = require("../models/user");
-const filterObject = require("../utils/filterObject");
+const filterObj = require("../utils/filterObj");
 
 exports.updateMe = async (req, res, next) => {
   const { user } = req;
 
-  const filterBody = filterObject(req.body, "firstName", "lastName", "email");
+  const filterBody = filterObj(req.body, "firstName", "lastName", "email");
 
   const updated_user = await User.findByIdAndUpdate(user._id, filterBody, {
     new: true,
