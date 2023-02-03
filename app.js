@@ -8,7 +8,7 @@ const bodyParser = require('body-parser')
 const xss = require('xss');
 const cors = require("cors");
 const app = express()
-
+const routes = require('./routes/index')
 // app.use(xss());
 app.use(express.json({
     limit: '10kb'
@@ -35,5 +35,7 @@ app.use(express.urlencoded({
     extended: true,
 }))
 app.use(mongoSanitize());
+
+app.use(routes);
 
 module.exports = app;
