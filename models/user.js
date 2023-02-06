@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -77,7 +78,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(inputPassword, userPassword);
 };
 
-userSchema.methods.correctOtp = async function (candidateOTP, userOTP) {
+userSchema.methods.correctOTP = async function (candidateOTP, userOTP) {
   return await bcrypt.compare(candidateOTP, userOTP);
 };
 

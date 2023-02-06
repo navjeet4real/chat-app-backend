@@ -5,11 +5,11 @@ const helmet = require('helmet');
 const cookieParser = require("cookie-parser");
 const mongoSanitize = require('express-mongo-sanitize');
 const bodyParser = require('body-parser')
-const xss = require('xss');
+const xss = require('xss-clean');
 const cors = require("cors");
 const app = express()
 const routes = require('./routes/index')
-// app.use(xss());
+
 app.use(express.json({
     limit: '10kb'
 }))
@@ -35,6 +35,8 @@ app.use(express.urlencoded({
     extended: true,
 }))
 app.use(mongoSanitize());
+
+app.use(xss());
 
 app.use(routes);
 

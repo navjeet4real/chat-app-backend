@@ -94,19 +94,19 @@ const authController = {
         otp_expiry_time,
       });
 
-      // mailService.sendMail({
-      //   from: "",
-      //   to: "",
-      //   subject: "OTP For Login",
-      //   text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-      // }).then(() => {
-      //   res.status(200).json({
-      //     status: "Success",
-      //     message: "OTP send successfully",
-      //   });
-      // }).catch((err) => {
-
-      // });
+      mailService.sendMail({
+        from: "navjeet4test5@yopmail.com",
+        to: "navjeet4test4@yopmail.com",
+        subject: "OTP For Login",
+        text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+      }).then(() => {
+        res.status(200).json({
+          status: "Success",
+          message: "OTP send successfully",
+        });
+      }).catch((err) => {
+        console.log(err,"err")
+      });
 
       res.status(200).json({
         status: "Success",
@@ -120,7 +120,7 @@ const authController = {
     try {
       const { email, otp } = req.body;
 
-      const user = user.findOne({
+      const user = User.findOne({
         email,
         otp_expiry_time: { $gt: Date.now() },
       });
@@ -138,6 +138,8 @@ const authController = {
           status: "error",
           message: "OTP is incorrect",
         });
+
+        return;
       }
 
       user.verified = true;
@@ -153,7 +155,7 @@ const authController = {
         token,
       });
     } catch (error) {
-      return res.status(500).json({ msg: err.message });
+      return res.status(500).json({ msg: error.message });
     }
   },
   protect: async (req, res, next) => {
