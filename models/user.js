@@ -48,13 +48,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
   },
   otp: {
-    type: Number,
+    type: String,
   },
   otp_expiry_time: {
     type: Date,
   },
   createdAt: {
     type: Date,
+    default: Date.now(),
   },
   updatedAt: {
     type: Date,
@@ -64,7 +65,7 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", async function (next) {
   if (!this.isModified("otp") || !this.otp) return next();
   
-  this.otp = await bcrypt.hash(this.otp, 12);
+  this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
   console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
 

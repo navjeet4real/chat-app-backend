@@ -92,29 +92,33 @@ const authController = {
         specialChars: false,
       });
 
+      console.log(new_otp, "New ------- otp")
       const otp_expiry_time = Date.now() + 10 * 60 * 1000;
 
-      await User.findByIdAndUpdate(userId, {
-        otp: new_otp,
+      const user = await User.findByIdAndUpdate(userId, {
+        otp: new_otp.toString(),
         otp_expiry_time,
       });
 
-      mailService
-        .sendMail({
-          from: "navjeet4test5@yopmail.com",
-          to: "navjeet4test4@yopmail.com",
-          subject: "OTP For Login",
-          text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-        })
-        .then(() => {
-          res.status(200).json({
-            status: "Success",
-            message: "OTP send successfully",
-          });
-        })
-        .catch((err) => {
-          console.log(err, "err");
-        });
+      user.otp = new_otp.toString();
+      await user.save({ new: true, validateModifiedOnly: true });
+
+      // mailService
+      //   .sendMail({
+      //     from: "navjeet4test5@yopmail.com",
+      //     to: "navjeet4test4@yopmail.com",
+      //     subject: "OTP For Login",
+      //     text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+      //   })
+      //   .then(() => {
+      //     res.status(200).json({
+      //       status: "Success",
+      //       message: "OTP send successfully",
+      //     });
+      //   })
+      //   .catch((err) => {
+      //     console.log(err, "err");
+      //   });
 
       res.status(200).json({
         status: "Success",
@@ -229,6 +233,7 @@ const authController = {
     }
   },
   forgotPassword: async (req, res, next) => {
+    console.log(req.body, "reqqqqqqqqqqqqqqq")
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -240,8 +245,10 @@ const authController = {
     }
 
     const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
     console.log(resetToken, "reset  ----------------------  Token");
-    const resetURL = `http://tawk.com/auth/reset-password/?code=${resetToken}`;
+    const resetURL = `http://localhost:3000/auth/new-password/?token=${resetToken}`;
+    console.log(resetURL, ":reset URL")
     try {
       // TODO => send Email
       res.status(200).json({
@@ -261,15 +268,18 @@ const authController = {
   },
   resetPassword: async (req, res, next) => {
     try {
+      // console.log(req.params.)
       const hashedToken = crypto
         .createHash("sha256")
-        .update(req.params.token)
+        .update(req.body.token)
         .digest("hex");
-
+      console.log(hashedToken,"hashed -------------- token")
       const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
       });
+
+      console.log(user, "userrrrrrrrrrrrrrr")
 
       // 2) if token has expired or submission is out of window
       if (!user) {
@@ -302,7 +312,7 @@ const authController = {
         token,
       });
     } catch (error) {
-      return res.status(500).json({ msg: err.message });
+      return res.status(500).json({ msg: error.message });
     }
   },
 };
