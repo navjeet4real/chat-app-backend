@@ -11,6 +11,7 @@ const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
+      console.log(email, password, "ffffffffffffff");
 
       if (!email || !password) {
         res.status(400).json({
@@ -21,11 +22,13 @@ const authController = {
 
       const userDoc = await User.findOne({ email: email }).select("+password");
 
+      console.log(userDoc, "userDoc");
+
       if (
         !userDoc ||
         !(await userDoc.correctPassword(password, userDoc.password))
       ) {
-        res.staus(400).json({
+        res.status(400).json({
           status: "error",
           message: "Email or Password is Incorect",
         });
@@ -39,7 +42,7 @@ const authController = {
         token,
       });
     } catch (err) {
-      return res.status(500).json({ msg: err.message });
+      // return res.status(500).json({ msg: err.message });
     }
   },
   register: async (req, res, next) => {
@@ -53,7 +56,9 @@ const authController = {
         "password",
         "email"
       );
+
       const existing_user = await User.findOne({ email: email });
+
       if (existing_user && existing_user.verified) {
         res.status(400).json({
           status: "error",
@@ -94,19 +99,22 @@ const authController = {
         otp_expiry_time,
       });
 
-      mailService.sendMail({
-        from: "navjeet4test5@yopmail.com",
-        to: "navjeet4test4@yopmail.com",
-        subject: "OTP For Login",
-        text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-      }).then(() => {
-        res.status(200).json({
-          status: "Success",
-          message: "OTP send successfully",
+      mailService
+        .sendMail({
+          from: "navjeet4test5@yopmail.com",
+          to: "navjeet4test4@yopmail.com",
+          subject: "OTP For Login",
+          text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+        })
+        .then(() => {
+          res.status(200).json({
+            status: "Success",
+            message: "OTP send successfully",
+          });
+        })
+        .catch((err) => {
+          console.log(err, "err");
         });
-      }).catch((err) => {
-        console.log(err,"err")
-      });
 
       res.status(200).json({
         status: "Success",
@@ -120,7 +128,7 @@ const authController = {
     try {
       const { email, otp } = req.body;
 
-      const user = User.findOne({
+      const user = await User.findOne({
         email,
         otp_expiry_time: { $gt: Date.now() },
       });
@@ -133,6 +141,14 @@ const authController = {
 
         return;
       }
+
+      if (user.verified) {
+        return res.status(400).json({
+          status: "error",
+          message: "Email is already verified",
+        });
+      }
+
       if (!(await user.correctOTP(otp, user.otp))) {
         res.status(400).json({
           status: "error",
@@ -223,7 +239,8 @@ const authController = {
       return;
     }
 
-    const resetToken = user.createPasswordReetToken();
+    const resetToken = user.createPasswordResetToken();
+    console.log(resetToken, "reset  ----------------------  Token");
     const resetURL = `http://tawk.com/auth/reset-password/?code=${resetToken}`;
     try {
       // TODO => send Email
