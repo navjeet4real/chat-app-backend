@@ -270,7 +270,7 @@ const authController = {
   },
   resetPassword: async (req, res, next) => {
     try {
-      // console.log(req.params.)
+      console.log(req.body,"req.bodyreq.bodyreq.bodyreq.bodyreq.body")
       const hashedToken = crypto
         .createHash("sha256")
         .update(req.body.token)
