@@ -35,7 +35,7 @@ const authController = {
       }
 
       const token = signToken(userDoc._id);
-
+      console.log(token,"dddddddddddddd")
       res.status(200).json({
         status: "Success",
         message: "Logged In.",
@@ -47,6 +47,7 @@ const authController = {
   },
   register: async (req, res, next) => {
     try {
+      console.log("hittttttttttt", req.body)
       const { firstName, lastname, email, password } = req.body;
 
       const filterBody = filterObj(
@@ -103,22 +104,23 @@ const authController = {
       user.otp = new_otp.toString();
       await user.save({ new: true, validateModifiedOnly: true });
 
-      // mailService
-      //   .sendMail({
-      //     from: "navjeet4test5@yopmail.com",
-      //     to: "navjeet4test4@yopmail.com",
-      //     subject: "OTP For Login",
-      //     text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-      //   })
-      //   .then(() => {
-      //     res.status(200).json({
-      //       status: "Success",
-      //       message: "OTP send successfully",
-      //     });
-      //   })
-      //   .catch((err) => {
-      //     console.log(err, "err");
-      //   });
+      mailService
+        .sendMail({
+          from: "navjeetkajal.2594.com",
+          to: user.email,
+          subject: "OTP For Login",
+          text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+        })
+        .then((response) => {
+          console.log(response,"resposne")
+          res.status(200).json({
+            status: "Success",
+            message: "OTP send successfully",
+          });
+        })
+        .catch((err) => {
+          console.log(err, "err");
+        });
 
       res.status(200).json({
         status: "Success",
