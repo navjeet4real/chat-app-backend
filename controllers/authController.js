@@ -11,7 +11,7 @@ const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
-      console.log(email, password, "ffffffffffffff");
+      // console.log(email, password, "ffffffffffffff");
 
       if (!email || !password) {
         res.status(400).json({
@@ -22,7 +22,7 @@ const authController = {
 
       const userDoc = await User.findOne({ email: email }).select("+password");
 
-      console.log(userDoc, "userDoc");
+      // console.log(userDoc, "userDoc");
 
       if (
         !userDoc ||
@@ -233,7 +233,7 @@ const authController = {
     }
   },
   forgotPassword: async (req, res, next) => {
-    console.log(req.body, "reqqqqqqqqqqqqqqq")
+    // console.log(req.body, "reqqqqqqqqqqqqqqq")
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -246,9 +246,9 @@ const authController = {
 
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
-    console.log(resetToken, "reset  ----------------------  Token");
+    // console.log(resetToken, "reset  ----------------------  Token");
     const resetURL = `http://localhost:3000/auth/new-password/?token=${resetToken}`;
-    console.log(resetURL, ":reset URL")
+    // console.log(resetURL, ":reset URL")
     try {
       // TODO => send Email
       res.status(200).json({
@@ -268,18 +268,18 @@ const authController = {
   },
   resetPassword: async (req, res, next) => {
     try {
-      console.log(req.body,"req.bodyreq.bodyreq.bodyreq.bodyreq.body")
+      // console.log(req.body,"req.bodyreq.bodyreq.bodyreq.bodyreq.body")
       const hashedToken = crypto
         .createHash("sha256")
         .update(req.body.token)
         .digest("hex");
-      console.log(hashedToken,"hashed -------------- token")
+      // console.log(hashedToken,"hashed -------------- token")
       const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
       });
 
-      console.log(user, "userrrrrrrrrrrrrrr")
+      // console.log(user, "userrrrrrrrrrrrrrr")
 
       // 2) if token has expired or submission is out of window
       if (!user) {

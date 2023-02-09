@@ -6,7 +6,7 @@ exports.updateMe = async (req, res, next) => {
 
   const filterBody = filterObj(req.body, "firstName", "lastName", "email");
 
-  const updated_user = await User.findByIdAndUpdate(user._id, filterBody, {
+  const updated_user = await User.findByIdAndUpdate(user._id, filterBody, { 
     new: true,
     validateModifiedOnly: true,
   });
