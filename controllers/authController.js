@@ -250,7 +250,7 @@ const authController = {
     await user.save({ validateBeforeSave: false });
     // console.log(resetToken, "reset  ----------------------  Token");
     const resetURL = `http://localhost:3000/auth/new-password/?token=${resetToken}`;
-    // console.log(resetURL, ":reset URL")
+    console.log(resetURL, ":reset URL")
     try {
       // TODO => send Email
       res.status(200).json({
