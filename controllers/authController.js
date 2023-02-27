@@ -4,8 +4,12 @@ const filterObj = require("../utils/filterObj");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
-const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 const mailService = require("../services/mailer");
+
+
+// function to return jwt token
+const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
+
 
 const authController = {
   login: async (req, res, next) => {
@@ -192,13 +196,13 @@ const authController = {
       ) {
         token = req.headers.authorization.split(" ")[1];
       } else if (req.cookies.jwt) {
-      } else {
-        res.status(400).json({
-          status: "error",
-          message: "You are not logged In! Please log in for access.",
-        });
+        token = req.cookies.jwt;
+      } 
 
-        return;
+      if (!token) {
+        return res.status(401).json({
+          message: "You are not logged in! Please log in to get access."
+        });
       }
 
       // 2) verification of token
@@ -207,7 +211,7 @@ const authController = {
         token,
         process.env.SECRET_KEY
       );
-
+      console.log(decoded,"decoded jwt token");
       // 3) check if user still exist
 
       const this_user = await User.findById(decoded.userId);
