@@ -60,8 +60,12 @@ const userSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.ObjectId,
       red: "User",
-    }
+    },
   ],
+  status: {
+    type: String,
+    enum: ["Online", "Offline"],
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -73,7 +77,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("otp") || !this.otp) return next();
-  
+
   this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
   console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
@@ -127,7 +131,7 @@ userSchema.methods.chagedPasswordAfter = function (timestamp) {
     );
     return timestamp < changedTimeStamp;
   }
-    // FALSE MEANS NOT CHANGED
+  // FALSE MEANS NOT CHANGED
   return false;
 };
 

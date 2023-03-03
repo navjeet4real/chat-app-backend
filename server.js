@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const User = require("./models/user");
 const { Server } = require("socket.io");
 const FriendRequest = require("./models/friendRequest");
+const path = require('path')
 
 dotenv.config({ path: "./config.env" });
 
@@ -47,11 +48,11 @@ io.on("connection", async (socket) => {
   const user_id = socket.handshake.query["user_id"];
 
   console.log(`User connected ${socket.id}`);
-
+  const socket_id = socket.id
   console.log(Boolean(user_id), user_id);
 
   if (Boolean(user_id)) {
-    await User.findByIdAndUpdate(user_id, { socket_id: socket.id });
+    await User.findByIdAndUpdate(user_id, { socket_id, status: "Online" });
   }
 
   // We can write our socket event listeners in here...
@@ -104,7 +105,58 @@ io.on("connection", async (socket) => {
       message: "Friend Request Accepted",
     });
   });
-  socket.on("end", function () {
+
+  // handle text and link  message
+
+  socket.on("text_message",(data) => {
+    console.log("Received Message", data)
+
+    // data {to, from, next}
+
+    // create a new conversation if it doesn't exist yet and add new message to the message list
+
+    // save to db
+
+    // emit incoming_message -> to user
+
+    // emit outgoing message -> from user
+
+
+  });
+
+  socket.on("file_message", (data) => {
+    console.log("Received Message", data);
+
+    // data: {to, from, text, file}
+
+    // get the file extention
+
+    const fileExtension = path.extname(data.file.name);
+
+    // generate a unique filename
+    const fileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}${fileExtension}`
+    
+    // upload to AWS S3
+
+    // create a new conversation if it doesn't exist yet and add new message to the message list
+
+    // save to db
+
+    // emit incoming_message -> to user
+
+    // emit outgoing message -> from user
+
+  })
+
+
+
+  socket.on("end", async (data) => {
+    //Find user by _id and set status offline
+    if(data.user_id){
+      await User.findByIdAndUpdate(data.user_id, {status: "Offline"})
+    }
+
+    // TODO => broadcast user disconnected 
     console.log("closing connection");
     socket.disconnect(0);
   });
