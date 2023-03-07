@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const User = require("./models/user");
 const { Server } = require("socket.io");
 const FriendRequest = require("./models/friendRequest");
+const OneToOneMessage = require("./models/OneToOneMessage");
+
 const path = require('path')
 
 dotenv.config({ path: "./config.env" });
@@ -106,6 +108,46 @@ io.on("connection", async (socket) => {
     });
   });
 
+  socket.on("get_direct_conversations", async ({user_id}, callback) => {
+    const existing_conversation = await OneToOneMessage.find({
+      participants: {$all :{user_id}}
+    }).populate("User","firstName lastName _id email status")
+
+    console.log(existing_conversation,"existing conversation")
+
+    callback(existing_conversation);
+  })
+
+  socket.on("start_conversation", async (data) => {
+    // data: {to, from}
+    const {to, from} = data;
+
+    //  check if there is any existing conversation between these two
+
+    const existing_conversation= await OneToOneMessage.find({
+      participants: {
+         $size: 2, $all: {to, from}
+      }
+    }).populate("participants","firstName lastName _id email status")
+
+    console.log(existing_conversation[0], "Existing conversation")
+
+    // if no conver
+    if(existing_conversation.length === 0) {
+      let new_chat = await(OneToOneMessage.create({
+        participants: [to, from],
+      }));
+
+      new_chat = await OneToOneMessage.findById(new_chat._id).populate("particpants", "firstName lastName _id email status")
+
+      console.log(new_chat, "new chat")
+      socket.emit("start_chat", new_chat)
+    }else{
+      socket.emit("open_chat",existing_conversation[0])
+    }
+
+    // if there is existing convo
+  })
   // handle text and link  message
 
   socket.on("text_message",(data) => {
