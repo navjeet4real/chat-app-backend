@@ -143,11 +143,17 @@ io.on("connection", async (socket) => {
 
       console.log(new_chat, "new chat")
       socket.emit("start_chat", new_chat)
-    }else{
-      socket.emit("open_chat",existing_conversation[0])
+    }
+     // if there is existing convo
+    else{
+      socket.emit("start_chat",existing_conversation[0])
     }
 
-    // if there is existing convo
+   
+  })
+
+  socket.on("get_messages",(data, callback) => {
+    
   })
   // handle text and link  message
 
