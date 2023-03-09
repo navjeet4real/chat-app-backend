@@ -46,7 +46,7 @@ server.listen(port, () => {
 // Add this
 // Listen for when the client connects via socket.io-client
 io.on("connection", async (socket) => {
-  console.log(JSON.stringify(socket.handshake.query));
+  console.log(JSON.stringify(socket.handshake.query),"JSON Stringify socket.handshake.query");
   const user_id = socket.handshake.query["user_id"];
 
   console.log(`User connected ${socket.id}`);
@@ -54,12 +54,13 @@ io.on("connection", async (socket) => {
   console.log(Boolean(user_id), user_id);
 
   if (Boolean(user_id)) {
+    console.log(user_id, "enter if loop")
     await User.findByIdAndUpdate(user_id, { socket_id, status: "Online" });
   }
 
   // We can write our socket event listeners in here...
   socket.on("friend_request", async (data) => {
-    console.log(data.to);
+    console.log(data.to, "data. to");
 
     const to = await User.findById(data.to).select("socket_id");
     const from = await User.findById(data.from).select("socket_id");

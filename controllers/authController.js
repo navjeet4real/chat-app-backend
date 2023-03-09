@@ -44,6 +44,7 @@ const authController = {
         status: "Success",
         message: "Logged In.",
         token,
+        user_id: userDoc._id
       });
     } catch (err) {
       // return res.status(500).json({ msg: err.message });
@@ -179,6 +180,7 @@ const authController = {
         status: "Success",
         message: "Logged In.",
         token,
+        user_id: user._id,
       });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
