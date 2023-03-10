@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 const FriendRequest = require("./models/friendRequest");
 const OneToOneMessage = require("./models/OneToOneMessage");
 
-const path = require('path')
+const path = require("path");
 
 dotenv.config({ path: "./config.env" });
 
@@ -46,15 +46,18 @@ server.listen(port, () => {
 // Add this
 // Listen for when the client connects via socket.io-client
 io.on("connection", async (socket) => {
-  console.log(JSON.stringify(socket.handshake.query),"JSON Stringify socket.handshake.query");
+  console.log(
+    JSON.stringify(socket.handshake.query),
+    "JSON Stringify socket.handshake.query"
+  );
   const user_id = socket.handshake.query["user_id"];
 
   console.log(`User connected ${socket.id}`);
-  const socket_id = socket.id
+  const socket_id = socket.id;
   console.log(Boolean(user_id), user_id);
 
   if (Boolean(user_id)) {
-    console.log(user_id, "enter if loop")
+    console.log(user_id, "enter if loop");
     await User.findByIdAndUpdate(user_id, { socket_id, status: "Online" });
   }
 
@@ -109,68 +112,94 @@ io.on("connection", async (socket) => {
     });
   });
 
-  socket.on("get_direct_conversations", async ({user_id}, callback) => {
+  socket.on("get_direct_conversations", async ({ user_id }, callback) => {
     const existing_conversation = await OneToOneMessage.find({
-      participants: {$all :{user_id}}
-    }).populate("User","firstName lastName _id email status")
+      participants: { $all: { user_id } },
+    }).populate("User", "firstName lastName _id email status");
 
-    console.log(existing_conversation,"existing conversation")
+    console.log(existing_conversation, "existing conversation");
 
     callback(existing_conversation);
-  })
+  });
 
   socket.on("start_conversation", async (data) => {
     // data: {to, from}
-    const {to, from} = data;
+    const { to, from } = data;
 
     //  check if there is any existing conversation between these two
 
-    const existing_conversation= await OneToOneMessage.find({
+    const existing_conversation = await OneToOneMessage.find({
       participants: {
-         $size: 2, $all: {to, from}
-      }
-    }).populate("participants","firstName lastName _id email status")
+        $size: 2,
+        $all: { to, from },
+      },
+    }).populate("participants", "firstName lastName _id email status");
 
-    console.log(existing_conversation[0], "Existing conversation")
+    console.log(existing_conversation[0], "Existing conversation");
 
     // if no conver
-    if(existing_conversation.length === 0) {
-      let new_chat = await(OneToOneMessage.create({
+    if (existing_conversation.length === 0) {
+      let new_chat = await OneToOneMessage.create({
         participants: [to, from],
-      }));
+      });
 
-      new_chat = await OneToOneMessage.findById(new_chat._id).populate("particpants", "firstName lastName _id email status")
+      new_chat = await OneToOneMessage.findById(new_chat._id).populate(
+        "particpants",
+        "firstName lastName _id email status"
+      );
 
-      console.log(new_chat, "new chat")
-      socket.emit("start_chat", new_chat)
+      console.log(new_chat, "new chat");
+      socket.emit("start_chat", new_chat);
     }
-     // if there is existing convo
-    else{
-      socket.emit("start_chat",existing_conversation[0])
+    // if there is existing convo
+    else {
+      socket.emit("start_chat", existing_conversation[0]);
     }
+  });
 
-   
-  })
-
-  socket.on("get_messages",(data, callback) => {
-    
-  })
+  socket.on("get_messages", async (data, callback) => {
+    const { messages } = await OneToOneMessage.findById(
+      data.conversation._id
+    ).select("messages");
+    callback(messages);
+  });
   // handle text and link  message
 
-  socket.on("text_message",(data) => {
-    console.log("Received Message", data)
+  socket.on("text_message", async (data) => {
+    console.log("Received Message", data);
 
     // data {to, from, next}
+    const { to, from, message, conversation_id, type } = data;
 
+    const to_user = await User.findById(to);
+    const from_user = await User.findById(from);
+
+
+    const new_message = {
+      to,
+      from,
+      type,
+      text: message,
+      created_at : Date.now(),
+    };
     // create a new conversation if it doesn't exist yet and add new message to the message list
+    const chat = await OneToOneMessage.findById(conversation_id)
+    chat.messages.push(new_message);
 
     // save to db
+    await chat.save({})
 
-    // emit incoming_message -> to user
+    // emit new_message -> to user
+    io.to(to_user.socket_id).emit("new_message",{
+      conversation_id,
+      message: new_message,
+    })
 
-    // emit outgoing message -> from user
-
-
+    // emit new_message -> from user
+    io.to(from_user.socket_id).emit("new_message",{
+      conversation_id,
+      message: new_message,
+    })
   });
 
   socket.on("file_message", (data) => {
@@ -183,8 +212,10 @@ io.on("connection", async (socket) => {
     const fileExtension = path.extname(data.file.name);
 
     // generate a unique filename
-    const fileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}${fileExtension}`
-    
+    const fileName = `${Date.now()}_${Math.floor(
+      Math.random() * 10000
+    )}${fileExtension}`;
+
     // upload to AWS S3
 
     // create a new conversation if it doesn't exist yet and add new message to the message list
@@ -194,18 +225,15 @@ io.on("connection", async (socket) => {
     // emit incoming_message -> to user
 
     // emit outgoing message -> from user
-
-  })
-
-
+  });
 
   socket.on("end", async (data) => {
     //Find user by _id and set status offline
-    if(data.user_id){
-      await User.findByIdAndUpdate(data.user_id, {status: "Offline"})
+    if (data.user_id) {
+      await User.findByIdAndUpdate(data.user_id, { status: "Offline" });
     }
 
-    // TODO => broadcast user disconnected 
+    // TODO => broadcast user disconnected
     console.log("closing connection");
     socket.disconnect(0);
   });
