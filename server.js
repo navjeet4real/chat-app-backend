@@ -114,8 +114,8 @@ io.on("connection", async (socket) => {
 
   socket.on("get_direct_conversations", async ({ user_id }, callback) => {
     const existing_conversation = await OneToOneMessage.find({
-      participants: { $all: { user_id } },
-    }).populate("User", "firstName lastName _id email status");
+      participants: { $all: [ user_id ] },
+    }).populate("participants", "firstName lastName _id email status");
 
     console.log(existing_conversation, "existing conversation");
 
@@ -131,7 +131,7 @@ io.on("connection", async (socket) => {
     const existing_conversation = await OneToOneMessage.find({
       participants: {
         $size: 2,
-        $all: { to, from },
+        $all: [ to, from ],
       },
     }).populate("participants", "firstName lastName _id email status");
 
@@ -143,7 +143,7 @@ io.on("connection", async (socket) => {
         participants: [to, from],
       });
 
-      new_chat = await OneToOneMessage.findById(new_chat._id).populate(
+      new_chat = await OneToOneMessage.findById(new_chat).populate(
         "particpants",
         "firstName lastName _id email status"
       );
@@ -159,7 +159,7 @@ io.on("connection", async (socket) => {
 
   socket.on("get_messages", async (data, callback) => {
     const { messages } = await OneToOneMessage.findById(
-      data.conversation._id
+      data.conversation_id
     ).select("messages");
     callback(messages);
   });
@@ -176,9 +176,9 @@ io.on("connection", async (socket) => {
 
 
     const new_message = {
-      to,
-      from,
-      type,
+      to: to,
+      from: from,
+      type: type,
       text: message,
       created_at : Date.now(),
     };
@@ -187,7 +187,7 @@ io.on("connection", async (socket) => {
     chat.messages.push(new_message);
 
     // save to db
-    await chat.save({})
+    await chat.save({new: true, validateModifiedOnly: true})
 
     // emit new_message -> to user
     io.to(to_user.socket_id).emit("new_message",{
