@@ -53,6 +53,19 @@ const userSchema = new mongoose.Schema({
   otp_expiry_time: {
     type: Date,
   },
+  socket_id: {
+    type: String,
+  },
+  friends: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+  ],
+  status: {
+    type: String,
+    enum: ["Online", "Offline"],
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -64,7 +77,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("otp") || !this.otp) return next();
-  
+
   this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
   console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
@@ -110,7 +123,7 @@ userSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
-userSchema.methods.chagedPasswordAfter = function (timestamp) {
+userSchema.methods.changedPasswordAfter = function (timestamp) {
   if (this.passwordChangedAt) {
     const changedTimeStamp = parseInt(
       this.passwordChangedAt.getTime() / 1000,
@@ -118,7 +131,7 @@ userSchema.methods.chagedPasswordAfter = function (timestamp) {
     );
     return timestamp < changedTimeStamp;
   }
-    // FALSE MEANS NOT CHANGED
+  // FALSE MEANS NOT CHANGED
   return false;
 };
 

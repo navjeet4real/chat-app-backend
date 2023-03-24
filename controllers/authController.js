@@ -4,19 +4,18 @@ const filterObj = require("../utils/filterObj");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
-const dotenv = require('dotenv');
-dotenv.config({path: "../config.env"});
-
 const mailService = require("../services/mailer");
 
 
+// function to return jwt token
 const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
+
 
 const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
-      console.log(email, password, "ffffffffffffff");
+      // console.log(email, password, "ffffffffffffff");
 
       if (!email || !password) {
         res.status(400).json({
@@ -27,7 +26,7 @@ const authController = {
 
       const userDoc = await User.findOne({ email: email }).select("+password");
 
-      console.log(userDoc, "userDoc");
+      // console.log(userDoc, "userDoc");
 
       if (
         !userDoc ||
@@ -45,6 +44,7 @@ const authController = {
         status: "Success",
         message: "Logged In.",
         token,
+        user_id: userDoc._id
       });
     } catch (err) {
       // return res.status(500).json({ msg: err.message });
@@ -108,24 +108,24 @@ const authController = {
 
       user.otp = new_otp.toString();
       await user.save({ new: true, validateModifiedOnly: true });
-      console.log(user.email, "user.email")
-      mailService
-        .sendMail({
-          from: "navjeetkajal.2594.com",
-          to: user.email,
-          subject: "OTP For Login",
-          text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-        })
-        .then((response) => {
-          console.log(response,"resposne")
-          res.status(200).json({
-            status: "Success",
-            message: "OTP send successfully",
-          });
-        })
-        .catch((err) => {
-          console.log(err, "err");
-        });
+
+      // mailService
+      //   .sendMail({
+      //     from: "navjeetkajal.2594.com",
+      //     to: user.email,
+      //     subject: "OTP For Login",
+      //     text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+      //   })
+      //   .then((response) => {
+      //     console.log(response,"resposne")
+      //     res.status(200).json({
+      //       status: "Success",
+      //       message: "OTP send successfully",
+      //     });
+      //   })
+      //   .catch((err) => {
+      //     console.log(err, "err");
+      //   });
 
       res.status(200).json({
         status: "Success",
@@ -180,6 +180,7 @@ const authController = {
         status: "Success",
         message: "Logged In.",
         token,
+        user_id: user._id,
       });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
@@ -197,13 +198,13 @@ const authController = {
       ) {
         token = req.headers.authorization.split(" ")[1];
       } else if (req.cookies.jwt) {
-      } else {
-        res.status(400).json({
-          status: "error",
-          message: "You are not logged In! Please log in for access.",
-        });
+        token = req.cookies.jwt;
+      } 
 
-        return;
+      if (!token) {
+        return res.status(401).json({
+          message: "You are not logged in! Please log in to get access."
+        });
       }
 
       // 2) verification of token
@@ -212,7 +213,7 @@ const authController = {
         token,
         process.env.SECRET_KEY
       );
-
+      console.log(decoded,"decoded jwt token");
       // 3) check if user still exist
 
       const this_user = await User.findById(decoded.userId);
@@ -226,7 +227,7 @@ const authController = {
 
       // 4) check if user cahnged their password after token is issued
 
-      if (this_user.chanedPasswordAfter(decoded.iat)) {
+      if (this_user.changedPasswordAfter(decoded.iat)) {
         res.status(400).json({
           status: "error",
           message: "user recently updated password. Please log in again.",
@@ -236,11 +237,11 @@ const authController = {
       req.user = this_user;
       next();
     } catch (error) {
-      return res.status(500).json({ msg: err.message });
+      return res.status(500).json({ msg: error.message });
     }
   },
   forgotPassword: async (req, res, next) => {
-    console.log(req.body, "reqqqqqqqqqqqqqqq")
+    // console.log(req.body, "reqqqqqqqqqqqqqqq")
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -253,7 +254,7 @@ const authController = {
 
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
-    console.log(resetToken, "reset  ----------------------  Token");
+    // console.log(resetToken, "reset  ----------------------  Token");
     const resetURL = `http://localhost:3000/auth/new-password/?token=${resetToken}`;
     console.log(resetURL, ":reset URL")
     try {
@@ -275,18 +276,18 @@ const authController = {
   },
   resetPassword: async (req, res, next) => {
     try {
-      console.log(req.body,"req.bodyreq.bodyreq.bodyreq.bodyreq.body")
+      // console.log(req.body,"req.bodyreq.bodyreq.bodyreq.bodyreq.body")
       const hashedToken = crypto
         .createHash("sha256")
         .update(req.body.token)
         .digest("hex");
-      console.log(hashedToken,"hashed -------------- token")
+      // console.log(hashedToken,"hashed -------------- token")
       const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
       });
 
-      console.log(user, "userrrrrrrrrrrrrrr")
+      // console.log(user, "userrrrrrrrrrrrrrr")
 
       // 2) if token has expired or submission is out of window
       if (!user) {
