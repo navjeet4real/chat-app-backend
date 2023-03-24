@@ -4,8 +4,13 @@ const filterObj = require("../utils/filterObj");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
 const { promisify } = require("util");
-const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
+const dotenv = require('dotenv');
+dotenv.config({path: "../config.env"});
+
 const mailService = require("../services/mailer");
+
+
+const signToken = (userId) => jwt.sign({ userId }, process.env.SECRET_KEY);
 
 const authController = {
   login: async (req, res, next) => {
@@ -103,7 +108,7 @@ const authController = {
 
       user.otp = new_otp.toString();
       await user.save({ new: true, validateModifiedOnly: true });
-
+      console.log(user.email, "user.email")
       mailService
         .sendMail({
           from: "navjeetkajal.2594.com",
