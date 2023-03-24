@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema({
   friends: [
     {
       type: mongoose.Schema.ObjectId,
-      red: "User",
+      ref: "User",
     },
   ],
   status: {
