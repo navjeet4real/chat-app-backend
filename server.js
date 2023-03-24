@@ -63,7 +63,7 @@ io.on("connection", async (socket) => {
 
   // We can write our socket event listeners in here...
   socket.on("friend_request", async (data) => {
-    console.log(data.to, "data. to");
+    console.log(data.to, "data. to friend_request");
 
     const to = await User.findById(data.to).select("socket_id");
     const from = await User.findById(data.from).select("socket_id");

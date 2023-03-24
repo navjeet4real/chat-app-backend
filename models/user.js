@@ -123,7 +123,7 @@ userSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
-userSchema.methods.chagedPasswordAfter = function (timestamp) {
+userSchema.methods.changedPasswordAfter = function (timestamp) {
   if (this.passwordChangedAt) {
     const changedTimeStamp = parseInt(
       this.passwordChangedAt.getTime() / 1000,

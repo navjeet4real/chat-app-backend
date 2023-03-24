@@ -109,23 +109,23 @@ const authController = {
       user.otp = new_otp.toString();
       await user.save({ new: true, validateModifiedOnly: true });
 
-      mailService
-        .sendMail({
-          from: "navjeetkajal.2594.com",
-          to: user.email,
-          subject: "OTP For Login",
-          text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
-        })
-        .then((response) => {
-          console.log(response,"resposne")
-          res.status(200).json({
-            status: "Success",
-            message: "OTP send successfully",
-          });
-        })
-        .catch((err) => {
-          console.log(err, "err");
-        });
+      // mailService
+      //   .sendMail({
+      //     from: "navjeetkajal.2594.com",
+      //     to: user.email,
+      //     subject: "OTP For Login",
+      //     text: `Your OTP is ${new_otp}. This is valid for 10 mins.`,
+      //   })
+      //   .then((response) => {
+      //     console.log(response,"resposne")
+      //     res.status(200).json({
+      //       status: "Success",
+      //       message: "OTP send successfully",
+      //     });
+      //   })
+      //   .catch((err) => {
+      //     console.log(err, "err");
+      //   });
 
       res.status(200).json({
         status: "Success",
@@ -227,7 +227,7 @@ const authController = {
 
       // 4) check if user cahnged their password after token is issued
 
-      if (this_user.chanedPasswordAfter(decoded.iat)) {
+      if (this_user.changedPasswordAfter(decoded.iat)) {
         res.status(400).json({
           status: "error",
           message: "user recently updated password. Please log in again.",
@@ -237,7 +237,7 @@ const authController = {
       req.user = this_user;
       next();
     } catch (error) {
-      return res.status(500).json({ msg: err.message });
+      return res.status(500).json({ msg: error.message });
     }
   },
   forgotPassword: async (req, res, next) => {
