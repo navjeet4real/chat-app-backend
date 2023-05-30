@@ -2,7 +2,7 @@ const FriendRequest = require("../models/friendRequest");
 const User = require("../models/user");
 const filterObj = require("../utils/filterObj");
 
-exports.updateMe = async (req, res, next) => {
+exports.updateMe = async (req, res) => {
   const { user } = req;
 
   const filterBody = filterObj(req.body, "firstName", "lastName", "email");
@@ -19,7 +19,7 @@ exports.updateMe = async (req, res, next) => {
   });
 };
 
-exports.getUsers = async (req, res, next) => {
+exports.getUsers = async (req, res) => {
   const all_users = await User.find({
     verified: true,
   }).select("firstName lastName _id ");
@@ -40,9 +40,9 @@ exports.getUsers = async (req, res, next) => {
   })
 };
 
-exports.getRequests = async (req, res, next) => {
+exports.getRequests = async (req, res) => {
   const requests = await FriendRequest.find({ recipient: req.user._id })
-    .populate("sender","_id firstName lastName")
+    .populate("sender").select("_id firstName lastName")
 
   res.status(200).json({
     status: "success",
@@ -51,7 +51,7 @@ exports.getRequests = async (req, res, next) => {
   });
 };
 
-exports.getFriends = async (req, res, next) => {
+exports.getFriends = async (req, res) => {
   const this_user = await User.findById(req.user._id).populate(
     "friends",
     "_id firstName lastName"
